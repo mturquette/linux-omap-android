@@ -23,33 +23,6 @@
 #define MAX_FREQ_UPDATE_WAIT  100000
 #define MAX_DPLL_LOCK_WAIT    100000
 
-#ifdef CONFIG_CPU_FREQ
-
-extern struct opp_table omap4_vdd1_table[];
-
-static struct cpufreq_frequency_table freq_table[NO_OF_VDD1_OPP + 1];
-
-void omap2_clk_init_cpufreq_table(struct cpufreq_frequency_table **table)
-{
-	int i = 0;
-
-	for (i = 0; i < NO_OF_VDD1_OPP; i++) {
-		freq_table[i].index = i;
-		freq_table[i].frequency = omap4_vdd1_table[i].freq / 1000;
-	}
-
-	if (i == 0) {
-		printk(KERN_WARNING "%s: failed to initialize frequency table\n",
-								__func__);
-		return;
-	}
-
-	freq_table[i].index = i;
-	freq_table[i].frequency = CPUFREQ_TABLE_END;
-	*table = &freq_table[0];
-}
-#endif
-
 const struct clkops clkops_noncore_dpll_ops = {
 	.enable		= &omap3_noncore_dpll_enable,
 	.disable	= &omap3_noncore_dpll_disable,

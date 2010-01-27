@@ -321,38 +321,6 @@ int omap3_core_dpll_m2_set_rate(struct clk *clk, unsigned long rate)
  */
 #if defined(CONFIG_ARCH_OMAP3)
 
-#ifdef CONFIG_CPU_FREQ
-static struct cpufreq_frequency_table freq_table[VDD1_OPP6+1];
-
-void omap2_clk_init_cpufreq_table(struct cpufreq_frequency_table **table)
-{
-	struct omap_opp *prcm;
-	int i = 0;
-
-	if (!mpu_opps)
-		return;
-
-	prcm = mpu_opps + MAX_VDD1_OPP;
-	for (; prcm->rate; prcm--) {
-		freq_table[i].index = i;
-		freq_table[i].frequency = prcm->rate / 1000;
-		i++;
-	}
-
-	if (i == 0) {
-		printk(KERN_WARNING "%s: failed to initialize frequency \
-								table\n",
-								__func__);
-		return;
-	}
-
-	freq_table[i].index = i;
-	freq_table[i].frequency = CPUFREQ_TABLE_END;
-
-	*table = &freq_table[0];
-}
-#endif
-
 /*
  * Set clocks for bypass mode for reboot to work.
  */
