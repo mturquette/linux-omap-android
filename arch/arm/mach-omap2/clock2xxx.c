@@ -65,6 +65,8 @@ void __iomem *prcm_clksrc_ctrl;
  * Omap24xx specific clock functions
  *-------------------------------------------------------------------------*/
 
+#ifdef CONFIG_ARCH_OMAP2430
+
 /**
  * omap2430_clk_i2chs_find_idlest - return CM_IDLEST info for 2430 I2CHS
  * @clk: struct clk * being enabled
@@ -83,6 +85,10 @@ static void omap2430_clk_i2chs_find_idlest(struct clk *clk,
 	*idlest_reg = OMAP_CM_REGADDR(CORE_MOD, CM_IDLEST);
 	*idlest_bit = clk->enable_bit;
 }
+
+#else
+#define omap2430_clk_i2chs_find_idlest	NULL
+#endif
 
 /* 2430 I2CHS has non-standard IDLEST register */
 const struct clkops clkops_omap2430_i2chs_wait = {
