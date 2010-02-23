@@ -962,7 +962,7 @@ int omap2_clkdm_clk_enable(struct clockdomain *clkdm, struct clk *clk)
 	 * downstream clocks for debugging purposes?
 	 */
 
-	if (!clkdm || !clk || !clkdm->clkstctrl_reg)
+	if (!clkdm || !clk)
 		return -EINVAL;
 
 	if (atomic_inc_return(&clkdm->usecount) > 1)
@@ -972,6 +972,9 @@ int omap2_clkdm_clk_enable(struct clockdomain *clkdm, struct clk *clk)
 
 	pr_debug("clockdomain: clkdm %s: clk %s now enabled\n", clkdm->name,
 		 clk->name);
+
+	if (!clkdm->clkstctrl_reg)
+		return 0;
 
 	v = omap2_clkdm_clktrctrl_read(clkdm);
 
@@ -1017,7 +1020,7 @@ int omap2_clkdm_clk_disable(struct clockdomain *clkdm, struct clk *clk)
 	 * downstream clocks for debugging purposes?
 	 */
 
-	if (!clkdm || !clk || !clkdm->clkstctrl_reg)
+	if (!clkdm || !clk)
 		return -EINVAL;
 
 #ifdef DEBUG
@@ -1034,6 +1037,9 @@ int omap2_clkdm_clk_disable(struct clockdomain *clkdm, struct clk *clk)
 
 	pr_debug("clockdomain: clkdm %s: clk %s now disabled\n", clkdm->name,
 		 clk->name);
+
+	if (!clkdm->clkstctrl_reg)
+		return 0;
 
 	v = omap2_clkdm_clktrctrl_read(clkdm);
 
