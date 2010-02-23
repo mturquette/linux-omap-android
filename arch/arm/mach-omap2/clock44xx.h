@@ -5,8 +5,8 @@
  * Copyright (C) 2010 Nokia Corporation
  */
 
-#ifndef __ARCH_ARM_MACH_OMAP2_CLOCK_44XX_H
-#define __ARCH_ARM_MACH_OMAP2_CLOCK_44XX_H
+#ifndef __ARCH_ARM_MACH_OMAP2_CLOCK44XX_H
+#define __ARCH_ARM_MACH_OMAP2_CLOCK44XX_H
 
 /*
  * XXX Missing values for the OMAP4 DPLL_USB
@@ -17,7 +17,5 @@
 
 int omap4_core_dpll_m2_set_rate(struct clk *clk, unsigned long rate);
 int omap4xxx_clk_init(void);
-
-extern const struct clkops clkops_noncore_dpll_ops;
 
 #endif
