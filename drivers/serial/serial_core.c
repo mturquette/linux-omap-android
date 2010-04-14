@@ -2216,7 +2216,7 @@ uart_configure_port(struct uart_driver *drv, struct uart_state *state,
 		uart_report_port(drv, port);
 
 		/* Power up port for set_mctrl() */
-		uart_change_pm(state, 0);
+		//uart_change_pm(state, 0);
 
 		/*
 		 * Ensure that the modem control lines are de-activated.
@@ -2239,8 +2239,8 @@ uart_configure_port(struct uart_driver *drv, struct uart_state *state,
 		 * Power down all ports by default, except the
 		 * console if we have one.
 		 */
-		if (!uart_console(port))
-			uart_change_pm(state, 3);
+		//if (!uart_console(port))
+			//uart_change_pm(state, 3);
 	}
 }
 
