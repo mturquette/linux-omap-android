@@ -28,7 +28,6 @@
 #include <plat/board.h>
 #include <plat/clock.h>
 #include <plat/control.h>
-#include <plat/gpio.h>
 
 #include <plat/dma.h>
 #include <plat/omap-serial.h>
@@ -41,7 +40,6 @@
 #define UART_OMAP_WER		0x17	/* Wake-up enable register */
 
 #define DEFAULT_TIMEOUT (5 * HZ)
-#define DRIVER_NAME  "omap-uart"
 
 struct omap_uart_state {
 	int num;
@@ -199,32 +197,6 @@ static struct uart_port_info uart4_port_info = {
 };
 #endif
 
-#if defined(CONFIG_MACH_OMAP_ZOOM2) || defined(CONFIG_MACH_OMAP_ZOOM3)
-struct plat_serialomap_port {
-        upf_t           flags;
-        int             disabled;
-        void            *private_data;
-        void __iomem    *membase;
-        unsigned char   regshift;
-        int             irq;
-        int             wake_gpio_strobe;
-};
-
-static struct plat_serialomap_port quart_port_info[] = {
-	{
-		.membase		= ZOOM2_QUART_VIRT,
-		.irq            = OMAP_GPIO_IRQ(102),
-		.flags          = UPF_BOOT_AUTOCONF|UPF_IOREMAP|UPF_SHARE_IRQ|
-				  UPF_TRIGGER_HIGH,
-		.regshift       = 1,
-		.disabled 		= 0,
-	}, {
-		.flags		= 0
-	}
-};
-
-#endif
-
 static struct resource omap_uart1_resources[] = {
 	{
 		.start          = OMAP_UART1_BASE,
@@ -307,20 +279,6 @@ static struct resource omap_uart4_resources[] = {
 };
 #endif
 
-#if defined(CONFIG_MACH_OMAP_ZOOM2) || defined(CONFIG_MACH_OMAP_ZOOM3)
-static struct resource omap_quart_resources[] = {
-	{
-		.start          = ZOOM2_QUART_PHYS,
-		.end            = ZOOM2_QUART_PHYS + (0x16 << 1),
-		.flags          = IORESOURCE_MEM,
-	}, {
-		/* QUART IRQ - 102*/
-		.start          = OMAP_GPIO_IRQ(102),
-		.flags          = IORESOURCE_IRQ,
-	}
-};
-#endif
-
 static struct omap_uart_state omap_uart[] = {
 	{
 		.pdev = {
@@ -362,19 +320,6 @@ static struct omap_uart_state omap_uart[] = {
 			.resource	= omap_uart4_resources,
 			.dev		= {
 				.platform_data  = &uart4_port_info,
-			},
-		}
-	},
-#endif
-#if defined(CONFIG_MACH_OMAP_ZOOM2) || defined(CONFIG_MACH_OMAP_ZOOM3)
-	{
-		.pdev = {
-			.name		= DRIVER_NAME,
-			.id		= 4,
-			.num_resources	= ARRAY_SIZE(omap_quart_resources),
-			.resource	= omap_quart_resources,
-			.dev		= {
-				.platform_data  = &quart_port_info,
 			},
 		}
 	},
@@ -809,32 +754,23 @@ static void omap_uart_early_port_init(struct omap_uart_state *uart)
 	case 0:
 		uart->irq	= INT_24XX_UART1_IRQ;
 		uart->mapbase	= OMAP_UART1_BASE;
-		uart->regshift = 2;
 		break;
 	case 1:
 		uart->irq	= INT_24XX_UART2_IRQ;
 		uart->mapbase	= OMAP_UART2_BASE;
-		uart->regshift = 2;
 		break;
 	case 2:
 		uart->irq	= INT_24XX_UART3_IRQ;
 		uart->mapbase	= OMAP_UART3_BASE;
-		uart->regshift = 2;
 		break;
 #ifdef CONFIG_ARCH_OMAP4
 	case 3:
 		uart->irq	= 70;
 		uart->mapbase	= OMAP_UART4_BASE;
-		uart->regshift = 2;
 		break;
 #endif
-#if defined(CONFIG_MACH_OMAP_ZOOM2) || defined(CONFIG_MACH_OMAP_ZOOM3)
-	case 3:
-		uart->irq 	= OMAP_GPIO_IRQ(102);
-		uart->mapbase 	= ZOOM2_QUART_PHYS;
-		uart->regshift = 1;
-#endif
 	}
+	uart->regshift = 2;
 	uart->irqflags = IRQF_SHARED;
 }
 
@@ -932,10 +868,6 @@ void __init omap_serial_init_port(int port)
 #endif
 	omap_uart_enable_clocks(uart);
 	omap_uart_reset(uart);
-
-#if defined(CONFIG_MACH_OMAP_ZOOM2) || defined(CONFIG_MACH_OMAP_ZOOM3)
-	if(uart->num <3)
-#endif
 	omap_uart_idle_init(uart);
 	list_add_tail(&uart->node, &uart_list);
 
