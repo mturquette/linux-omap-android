@@ -330,37 +330,40 @@ static int twl_mmc1_set_power(struct device *dev, int slot, int power_on,
 		}
 		omap_ctrl_writel(reg, control_pbias_offset);
 
-		/* Hack need to fix it */
-		if ((vdd == 0x12) || (vdd == 0x7)) {
-			regs = 0x01;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+		if (cpu_is_omap44xx()) {
+			/* Hack need to fix it */
+			if ((vdd == 0x12) || (vdd == 0x7)) {
+				regs = 0x01;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 						regs, MMC_GRP);
-			regs = 0x03;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x03;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_TRANS);
-			regs = 0x21;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x21;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_STATE);
-			regs = 0x15;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x15;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_VOLTAGE);
-		} else {
-			regs = 0x01;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+			} else {
+				regs = 0x01;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 						regs, MMC_GRP);
-			regs = 0x03;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x03;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_TRANS);
-			regs = 0x00;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x00;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_STATE);
-			regs = 0x09;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x09;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_STATE);
-			regs = 0x15;
-			twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
+				regs = 0x15;
+				twl_i2c_write_u8(TWL_MODULE_PM_RECEIVER,
 					regs, MMC_VOLTAGE);
+			}
 		}
+
 		if (!cpu_is_omap44xx())
 			ret = mmc_regulator_set_ocr(c->vcc, vdd);
 
