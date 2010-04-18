@@ -1148,12 +1148,13 @@ static int __init omap2_mcbsp_init(void)
 {
 	int i;
 
+#ifdef CONFIG_ARCH_OMAP4
 	for (i = 0; i < omap_mcbsp_clks_size; i++) {
 	/* Once we call clk_get inside init, we do not register it */
 	omap_mcbsp_clk_init(&omap_mcbsp_clks[i]);
 	clk_register(&omap_mcbsp_clks[i].clk);
 	}
-
+#endif
 	if (cpu_is_omap2420())
 		omap_mcbsp_count = OMAP2420_MCBSP_PDATA_SZ;
 	if (cpu_is_omap2430())
