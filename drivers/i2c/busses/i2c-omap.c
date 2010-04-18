@@ -327,9 +327,11 @@ static void omap_i2c_idle(struct omap_i2c_dev *dev)
 	WARN_ON(dev->idle);
 
 	dev->iestate = omap_i2c_read_reg(dev, OMAP_I2C_IE_REG);
+#ifdef CONFIG_ARCH_OMAP4
 	if (dev->rev >= OMAP_I2C_REV_ON_4430)
 		omap_i2c_write_reg(dev, OMAP_I2C_IRQENABLE_CLR, 1);
 	else
+#endif
 		omap_i2c_write_reg(dev, OMAP_I2C_IE_REG, 0);
 
 	if (dev->rev < OMAP_I2C_REV_2) {
@@ -343,7 +345,8 @@ static void omap_i2c_idle(struct omap_i2c_dev *dev)
 	dev->idle = 1;
 	if (!cpu_is_omap44xx())
 		clk_disable(dev->fclk);
-	clk_disable(dev->iclk);
+	if (dev->iclk != NULL)
+		clk_disable(dev->iclk);
 }
 
 static int omap_i2c_init(struct omap_i2c_dev *dev)
