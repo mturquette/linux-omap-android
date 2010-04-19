@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2009 Texas Instruments Inc.
  *
@@ -25,6 +26,10 @@
 #include <plat/usb.h>
 
 #include "mmc-twl4030.h"
+
+extern struct regulator_init_data zoom_vdac;
+extern struct regulator_init_data zoom2_vdsi;
+extern void zoom_lcd_tv_panel_init(void);
 
 /* Zoom2 has Qwerty keyboard*/
 static int board_keymap[] = {
@@ -239,9 +244,11 @@ static struct twl4030_platform_data zoom_twldata = {
 	.gpio		= &zoom_gpio_data,
 	.keypad		= &zoom_kp_twl4030_data,
 	.codec		= &zoom_codec_data,
-	.vmmc1          = &zoom_vmmc1,
-	.vmmc2          = &zoom_vmmc2,
-	.vsim           = &zoom_vsim,
+	.vmmc1		= &zoom_vmmc1,
+	.vmmc2		= &zoom_vmmc2,
+	.vsim		= &zoom_vsim,
+	.vdac		= &zoom_vdac,
+	.vpll2		= &zoom2_vdsi,
 
 };
 
@@ -273,5 +280,6 @@ void __init zoom_peripherals_init(void)
 {
 	omap_i2c_init();
 	omap_serial_init();
+	zoom_lcd_tv_panel_init();
 	usb_musb_init(&musb_board_data);
 }
