@@ -569,8 +569,9 @@ int dss_init(bool skip_init)
 		r = -ENOMEM;
 		goto fail0;
 	}
-	test();
-
+#ifdef CONFIG_ARCH_OMAP4
+		test();
+#endif
 	if (!skip_init) {
 		/* disable LCD and DIGIT output. This seems to fix the synclost
 		 * problem that we get, if the bootloader starts the DSS and
