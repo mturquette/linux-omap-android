@@ -1245,22 +1245,6 @@ static int __init omap3_pm_init(void)
 	omap3_idle_init();
 
 	clkdm_add_wkdep(neon_clkdm, mpu_clkdm);
-	/*
-	 * REVISIT: This wkdep is only necessary when GPIO2-6 are enabled for
-	 * IO-pad wakeup.  Otherwise it will unnecessarily waste power
-	 * waking up PER with every CORE wakeup - see
-	 * http://marc.info/?l=linux-omap&m=121852150710062&w=2
-	*/
-	clkdm_add_wkdep(per_clkdm, core_clkdm);
-	/*
-	 * A part of the fix for errata 1.158.
-	 * GPIO pad spurious transition (glitch/spike) upon wakeup
-	 * from SYSTEM OFF mode. The remaining fix is in:
-	 * omap3_gpio_save_context, omap3_gpio_restore_context.
-	 */
-	if (omap_rev() <= OMAP3430_REV_ES3_1)
-		clkdm_add_wkdep(per_pwrdm, wkup_pwrdm);
-
 	if (omap_type() != OMAP2_DEVICE_TYPE_GP) {
 		omap3_secure_ram_storage =
 			kmalloc(0x803F, GFP_KERNEL);
