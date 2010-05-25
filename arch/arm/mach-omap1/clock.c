@@ -37,27 +37,15 @@ struct clk *api_ck_p, *ck_dpll1_p, *ck_ref_p;
 /*-------------------------------------------------------------------------
  * Omap1 specific clock functions
  *-------------------------------------------------------------------------*/
-
-static int clk_omap1_dummy_enable(struct clk *clk)
-{
-	return 0;
-}
-
-static void clk_omap1_dummy_disable(struct clk *clk)
-{
-}
-
-const struct clkops clkops_dummy = {
-	.enable		= clk_omap1_dummy_enable,
-	.disable	= clk_omap1_dummy_disable,
-};
-
 /* XXX can be replaced with a fixed_divisor_recalc */
+
 unsigned long omap1_watchdog_recalc(struct clk *clk)
 {
 	return clk->parent->rate / 14;
 }
 
+=======
+>>>>>>> 7c43d54... OMAP4: clock: Add dummy clock nodes for interface clocks:arch/arm/mach-omap1/clock.c
 unsigned long omap1_uart_recalc(struct clk *clk)
 {
 	unsigned int val = __raw_readl(clk->enable_reg);
