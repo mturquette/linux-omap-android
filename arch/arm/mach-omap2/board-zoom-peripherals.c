@@ -399,7 +399,6 @@ void __init zoom_peripherals_init(void)
 {
 	omap_i2c_init();
 	synaptics_dev_init();
-	omap_serial_init();
 #if defined(CONFIG_MACH_OMAP_ZOOM3) || defined(CONFIG_MACH_OMAP_ZOOM2)
 	zoom_lcd_tv_panel_init();
 #endif
