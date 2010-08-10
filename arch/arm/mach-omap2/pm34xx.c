@@ -65,10 +65,6 @@ static int regset_save_on_suspend;
 #define OMAP343X_CONTROL_REG_VALUE_OFFSET  0x32
 
 #define VP_TRANXDONE_TIMEOUT	62
-#define ABB_TRANXDONE_TIMEOUT	30
-
-#define ABB_FAST_OPP	1
-#define ABB_NOMINAL_OPP	2
 
 #define PER_WAKEUP_ERRATA_i582 (1 << 0)
 static u16 pm34xx_errata;
@@ -482,7 +478,6 @@ void omap_sram_idle(void)
 if (pwrdm_read_pwrst(cam_pwrdm) == PWRDM_POWER_ON)
 		omap2_clkdm_deny_idle(mpu_pwrdm->pwrdm_clkdms[0]);
 
-#ifndef CONFIG_OMAP_SMARTREFLEX_CLASS1P5
 	/*
 	 * Disable smartreflex before entering WFI.
 	 * Only needed if we are going to enter retention or off.
@@ -491,7 +486,6 @@ if (pwrdm_read_pwrst(cam_pwrdm) == PWRDM_POWER_ON)
 		disable_smartreflex(SR1);
 	if (core_next_state <= PWRDM_POWER_RET)
 		disable_smartreflex(SR2);
-#endif
 
 	/* CORE */
 	if (core_next_state <= PWRDM_POWER_RET) {
@@ -610,7 +604,6 @@ if (core_next_state < PWRDM_POWER_ON) {
 						0x0, PLL_MOD, CM_AUTOIDLE);
 		set_dpll3_volt_freq(1);
 	}
-#ifndef CONFIG_OMAP_SMARTREFLEX_CLASS1P5
 	/*
 	 * Enable smartreflex after WFI. Only needed if we entered
 	 * retention or off
@@ -619,7 +612,6 @@ if (core_next_state < PWRDM_POWER_ON) {
 		enable_smartreflex(SR1);
 	if (core_next_state <= PWRDM_POWER_RET)
 		enable_smartreflex(SR2);
-#endif
 
 	/* PER */
 	if (per_next_state < PWRDM_POWER_ON) {
@@ -1188,109 +1180,6 @@ int omap3_pm_set_suspend_state(struct powerdomain *pwrdm, int state)
 	return -EINVAL;
 }
 
-/**
- * omap3630_abb_change_active_opp - handle OPP changes with Adaptive Body-Bias
- * @target_opp_no: OPP we're transitioning to
- *
- * Adaptive Body-Bias is a 3630-specific technique to boost voltage in high
- * OPPs for silicon with weak characteristics as well as lower voltage in low
- * OPPs for silicon with strong characteristics.
- *
- * Only Foward Body-Bias for operating at high OPPs is implemented below.
- * Reverse Body-Bias for saving power in active cases and sleep cases is not
- * yet implemented.
- */
-static int omap3630_abb_change_active_opp(u32 target_opp_no)
-{
-	u32 sr2en_enabled;
-	int timeout;
-
-	/* has SR2EN been enabled previously? */
-	sr2en_enabled = (prm_read_mod_reg(OMAP3430_GR_MOD,
-				OMAP3_PRM_LDO_ABB_CTRL_OFFSET) &
-			OMAP3630_SR2EN);
-
-	/* select OPP */
-	/* FIXME: shouldn't be hardcoded OPP here */
-	if (target_opp_no >= VDD1_OPP4) {
-		/* program for fast opp - enable fbb */
-		prm_rmw_mod_reg_bits(OMAP3630_OPP_SEL_MASK,
-				(ABB_FAST_OPP << OMAP3630_OPP_SEL_SHIFT),
-				OMAP3430_GR_MOD,
-				OMAP3_PRM_LDO_ABB_SETUP_OFFSET);
-
-		/* enable the ABB ldo if not done already */
-		if (!sr2en_enabled)
-			prm_set_mod_reg_bits(OMAP3630_SR2EN,
-					OMAP3430_GR_MOD,
-					OMAP3_PRM_LDO_ABB_CTRL_OFFSET);
-	} else if (sr2en_enabled) {
-		/* program for nominal opp - bypass abb ldo */
-		prm_rmw_mod_reg_bits(OMAP3630_OPP_SEL_MASK,
-				(ABB_NOMINAL_OPP << OMAP3630_OPP_SEL_SHIFT),
-				OMAP3430_GR_MOD,
-				OMAP3_PRM_LDO_ABB_SETUP_OFFSET);
-	} else {
-		/* nothing to do here */
-		return 0;
-	}
-
-	/* set ACTIVE_FBB_SEL for all 3630 silicon */
-	prm_set_mod_reg_bits(OMAP3630_ACTIVE_FBB_SEL,
-			OMAP3430_GR_MOD,
-			OMAP3_PRM_LDO_ABB_CTRL_OFFSET);
-
-	/* program settling time of 30us for ABB ldo transition */
-	prm_rmw_mod_reg_bits(OMAP3630_SR2_WTCNT_VALUE_MASK,
-			(0x62 << OMAP3630_SR2_WTCNT_VALUE_SHIFT),
-			OMAP3430_GR_MOD,
-			OMAP3_PRM_LDO_ABB_CTRL_OFFSET);
-
-	/* clear ABB ldo interrupt status */
-	prm_write_mod_reg(OMAP3630_ABB_LDO_TRANXDONE_ST,
-			OCP_MOD,
-			OMAP2_PRCM_IRQSTATUS_MPU_OFFSET);
-
-	/* enable ABB LDO OPP change */
-	prm_set_mod_reg_bits(OMAP3630_OPP_CHANGE,
-			OMAP3430_GR_MOD,
-			OMAP3_PRM_LDO_ABB_SETUP_OFFSET);
-
-	timeout = 0;
-
-	/* wait until OPP change completes */
-	while ((timeout < ABB_TRANXDONE_TIMEOUT) &&
-			(!(prm_read_mod_reg(OCP_MOD,
-					    OMAP2_PRCM_IRQSTATUS_MPU_OFFSET) &
-			   OMAP3630_ABB_LDO_TRANXDONE_ST))) {
-		udelay(1);
-		timeout++;
-	}
-
-	if (timeout == ABB_TRANXDONE_TIMEOUT)
-		pr_debug("ABB: TRANXDONE timed out waiting for OPP change\n");
-
-	timeout = 0;
-
-	/* Clear all pending TRANXDONE interrupts/status */
-	while (timeout < ABB_TRANXDONE_TIMEOUT) {
-		prm_write_mod_reg(OMAP3630_ABB_LDO_TRANXDONE_ST,
-				OCP_MOD,
-				OMAP2_PRCM_IRQSTATUS_MPU_OFFSET);
-		if (!(prm_read_mod_reg(OCP_MOD,
-						OMAP2_PRCM_IRQSTATUS_MPU_OFFSET)
-					& OMAP3630_ABB_LDO_TRANXDONE_ST))
-			break;
-
-		udelay(1);
-		timeout++;
-	}
-	if (timeout == ABB_TRANXDONE_TIMEOUT)
-		pr_debug("ABB: TRANXDONE timed out trying to clear status\n");
-
-	return 0;
-}
-
 #ifdef CONFIG_VOLTSCALE_VPFORCE
 /* Voltage Scale using vp force update */
 static int voltagescale_vpforceupdate(u32 target_opp, u32 current_opp,
@@ -1308,10 +1197,6 @@ static int voltagescale_vpforceupdate(u32 target_opp, u32 current_opp,
 	t2_smps_steps = abs(target_vsel - current_vsel);
 
 	if (vdd == VDD1_OPP) {
-		/* Disable FBB before scaling volt while coming down from 1G */
-		if (target_opp < current_opp)
-			omap3630_abb_change_active_opp(target_opp_no);
-
 		vp_config_offs = OMAP3_PRM_VP1_CONFIG_OFFSET;
 		vp_tranxdone_st = OMAP3430_VP1_TRANXDONE_ST;
 		vpconfig = target_vsel << OMAP3430_INITVOLTAGE_SHIFT |
@@ -1403,12 +1288,6 @@ static int voltagescale_vpforceupdate(u32 target_opp, u32 current_opp,
 	/* Clear force bit */
 	prm_clear_mod_reg_bits(OMAP3430_FORCEUPDATE, OMAP3430_GR_MOD,
 			vp_config_offs);
-
-	/* Adjust ABB ldo for new OPP */
-	if (cpu_is_omap3630() && vdd == VDD1_OPP &&
-					target_opp > current_opp)
-		omap3630_abb_change_active_opp(target_opp_no);
-
 	return 0;
 }
 #endif
@@ -1774,75 +1653,3 @@ static int __init omap3_pm_early_init(void)
 arch_initcall(omap3_pm_early_init);
 late_initcall(omap3_pm_init);
 
-
-#ifdef CONFIG_OMAP_SMARTREFLEX_CLASS1P5
-extern struct omap_opp *mpu_opps;
-extern struct omap_opp *l3_opps;
-
-static ssize_t sr_adjust_vsel_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	u8 num_mpu_opps = omap_pm_get_max_vdd1_opp();
-	u8 num_l3_opps = omap_pm_get_max_vdd2_opp();
-	int i;
-	char *tbuf = buf;
-
-	tbuf += sprintf(tbuf, "oppid:\t[nominal v]\t[calib v]\t"
-				"[calib step v]\n");
-	for (i = 1; i <= num_mpu_opps; i++)
-		if (mpu_opps[i].rate)
-			tbuf += sprintf(tbuf, "mpu %d:\t0x%02x\t\t0x%02x\t\t"
-						"0x%02x\n", i,
-					mpu_opps[i].vsel,
-					mpu_opps[i].sr_adjust_vsel,
-					mpu_opps[i].sr_vsr_step_vsel);
-	for (i = 1; i <= num_l3_opps; i++)
-		if (l3_opps[i].rate)
-			tbuf += sprintf(tbuf, "l3 %d:\t0x%02x\t\t0x%02x\t\t"
-						"0x%02x\n", i,
-					l3_opps[i].vsel,
-					l3_opps[i].sr_adjust_vsel,
-					l3_opps[i].sr_vsr_step_vsel);
-	return tbuf - buf;
-}
-
-
-static ssize_t sr_adjust_vsel_store(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf, size_t n)
-{
-	unsigned short value;
-	u8 num_mpu_opps;
-	u8 num_l3_opps;
-	int i;
-
-	if ((sscanf(buf, "%hu", &value) > 1) || value) {
-		pr_err("%s: Invalid value %d\n", __func__, value);
-		return -EINVAL;
-	}
-	num_mpu_opps = omap_pm_get_max_vdd1_opp();
-	num_l3_opps = omap_pm_get_max_vdd2_opp();
-	/* reset the calibrated voltages which are enabled */
-	for (i = 1; i <= num_mpu_opps; i++)
-		if (mpu_opps[i].rate) {
-			mpu_opps[i].sr_adjust_vsel = 0;
-			mpu_opps[i].sr_vsr_step_vsel = 0;
-		}
-	for (i = 1; i <= num_l3_opps; i++)
-		if (l3_opps[i].rate) {
-			l3_opps[i].sr_adjust_vsel = 0;
-			l3_opps[i].sr_vsr_step_vsel = 0;
-		}
-	return n;
-}
-
-static struct kobj_attribute sr_adjust_vsel_attr =
-	__ATTR(sr_adjust_vsel, 0644, sr_adjust_vsel_show, sr_adjust_vsel_store);
-
-static int __init omap_sr_adjust_vsel_init(void)
-{
-	if (sysfs_create_file(power_kobj, &sr_adjust_vsel_attr.attr))
-		pr_warning("sr_adjust_vsel: sysfs_create_file failed\n");
-	return 0;
-}
-late_initcall(omap_sr_adjust_vsel_init);
-#endif

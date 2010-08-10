@@ -51,7 +51,7 @@
 /* PRM_VP1_CONFIG */
 #define PRM_VP1_CONFIG_ERROROFFSET	(0x00 << 24)
 #define PRM_VP1_CONFIG_ERRORGAIN_OPPLOW		(0x0C << 16)
-#define PRM_VP1_CONFIG_ERRORGAIN_OPPHIGH	(0x27 << 16)
+#define PRM_VP1_CONFIG_ERRORGAIN_OPPHIGH	(0x18 << 16)
 
 #define PRM_VP1_CONFIG_INITVOLTAGE	(0x30 << 8) /* 1.2 volt */
 
@@ -266,15 +266,9 @@ int sr_stop_vddautocomap(int srid);
 typedef int (*omap3_voltagescale_vcbypass_t)(u32 t_opp, u32 c_opp,
 						u8 t_vsel, u8 c_vsel);
 void omap3_voltagescale_vcbypass_setup(omap3_voltagescale_vcbypass_t fun);
-int sr_recalibrate(int srid, u32 target_opp, u32 current_opp);
-
 #else
 static inline void enable_smartreflex(int srid) {}
 static inline void disable_smartreflex(int srid) {}
-int sr_recalibrate(int srid, u32 target_opp, u32 current_opp)
-{
-	return -EINVAL;
-}
 #define omap3_voltagescale_vcbypass_setup(fun) do {} while (0);
 #endif
 
