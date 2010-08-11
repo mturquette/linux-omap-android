@@ -23,7 +23,6 @@
 
 #include "mux.h"
 #include "sdram-hynix-h8mbx00u0mer-0em.h"
-#include "omap3-opp.h"
 
 /* Added for FlexST */
 #include "board-connectivity.h"
@@ -95,10 +94,7 @@ static void __init omap_zoom_init_irq(void)
 	omap_board_config_size = ARRAY_SIZE(zoom_config);
 	omap_init_irq();
 	omap2_init_common_hw(h8mbx00u0mer0em_sdrc_params,
-			     h8mbx00u0mer0em_sdrc_params,
-			     omap3630_mpu_rate_table,
-			     omap3630_dsp_rate_table,
-			     omap3630_l3_rate_table);
+			     h8mbx00u0mer0em_sdrc_params);
 }
 
 #ifdef CONFIG_OMAP_MUX
