@@ -353,7 +353,7 @@ int opp_add(const struct omap_opp_def *opp_def)
 	}
 	oh = omap_hwmod_lookup(opp_def->hwmod_name);
 	if (!oh || !oh->od) {
-		pr_warn("%s: no hwmod or odev for %s, cannot add OPPs.\n",
+		pr_warning("%s: no hwmod or odev for %s, cannot add OPPs.\n",
 			__func__, opp_def->hwmod_name);
 		return -EINVAL;
 	}
