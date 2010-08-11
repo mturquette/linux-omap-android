@@ -18,24 +18,7 @@
 #include <linux/cpufreq.h>
 
 #include "powerdomain.h"
-
-/**
- * struct omap_opp - clock frequency-to-OPP ID table for DSP, MPU
- * @rate: target clock rate
- * @opp_id: OPP ID
- * @min_vdd: minimum VDD1 voltage (in millivolts) for this OPP
- *
- * Operating performance point data.  Can vary by OMAP chip and board.
- */
-struct omap_opp {
-	unsigned long rate;
-	u8 opp_id;
-	u16 vsel;
-};
-
-extern struct omap_opp *mpu_opps;
-extern struct omap_opp *dsp_opps;
-extern struct omap_opp *l3_opps;
+#include <plat/opp.h>
 
 extern unsigned short get_opp_id(struct omap_opp *opp_freq_table,
 				unsigned long freq);
@@ -61,11 +44,9 @@ extern unsigned short get_opp_id(struct omap_opp *opp_freq_table,
  * PM idle-loop code.
  */
 #ifdef CONFIG_OMAP_PM_NONE
-#define omap_pm_if_early_init(a, b, c) 0
+#define omap_pm_if_early_init() 0
 #else
-int __init omap_pm_if_early_init(struct omap_opp *mpu_opp_table,
-				 struct omap_opp *dsp_opp_table,
-				 struct omap_opp *l3_opp_table);
+int __init omap_pm_if_early_init(void);
 #endif
 
 /**
